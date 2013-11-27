@@ -6,6 +6,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+#define swap(x,y) \
+{ \
+    void* temp = (void*)(x); \
+    x = y; \
+    *((void**)(&(y))) = temp; \
+}
 
 // Create the node object
 // Also add the pointer to the parent node
@@ -66,13 +74,6 @@ int determine_count(Node* node) {
     return count;
 }
 
-// Swap two node pointers
-void swap(Node* a, Node* b) {
-    Node* tmp = a;
-    a = b;
-    b = tmp;
-}
-
 void rotate_left(Node* node) {
     if((node == NULL) || (node->left == NULL)) {
         return;
@@ -85,22 +86,32 @@ void rotate_left(Node* node) {
         node->parent->right = node->left;
     }
 
+    swap(node->count, node->left->count);
     swap(node->parent, node->left);
 }
 
 void rotate_right(Node* node) {
+	printf("Entering with %d\n", node->element);
+
     if((node == NULL) || (node->right == NULL)) {
         return;
     }
 
+    printf("Step 1\n");
     node->right->parent = node->parent;
+    printf("Step 2\n");
     node->right->left = node;
 
+    printf("Step \n");
     if(node->parent != NULL) {
         node->parent->left = node->right;
     }
 
+    printf("Step 4\n");
+    swap(node->count, node->right->count);
+    printf("Step 5\n");
     swap(node->parent, node->right);
+    printf("Done!\n");
 }
 
 /**
@@ -135,33 +146,33 @@ Node* BST_insert_element(Node* parent, Node* node, int x) {
  * Always insert the new node as a leaf, but then rotate the node
  * up the tree until it is the root.
  */
-Node* BST_insert_at_root(Node* parent, Node* node, int x) {
-	if(node == NULL) {
-	    return create_node(parent, x);
+Node* BST_insert_at_root(Node* node, int x) {
+	node->count++;
+	if(x < node->element) {
+		if(node->left == NULL) {
+			node->left = create_node(node->left, x);
+		}
+		else {
+			BST_insert_at_root(node->left, x);
+		}
+		rotate_left(node);
+	}
+	else if(x > node->element) {
+		if(node->right == NULL) {
+			node->right = create_node(node->right, x);
+		}
+		else {
+			BST_insert_at_root(node->right, x);
+		}
+		rotate_right(node);
 	}
 	else {
-	    node->count++;
-	    if(x < node->element) {
-            node->left = BST_insert_at_root(node, node->left, x);
-            rotate_right(node);
-            // Make sure the tree knows that the new node is the root
-            root = node;
-            root->parent = NULL;
-	    }
-	    else if(x > node->element) {
-            node->right = BST_insert_at_root(node, node->right, x);
-            rotate_left(node);
-            // Make sure the tree knows that the new node is the root
-            root = node;
-            root->parent = NULL;
-	    }
-	    else {
-            printf("%d is already present in the tree\n", node->element);
-            node->count--;
-            decrease_count(node);
-	    }
-	    return node;
+		printf("%d is already present in the tree\n", node->element);
+		node->count--;
+		decrease_count(node);
+		return node;
 	}
+	return node->parent;
 }
 
 // something is not quite right with this function...
@@ -222,7 +233,7 @@ Node* display_tree(Node* node) {
 }
 
 int main() {
-    //Create the root of tree
+	// Create the root of tree
     tree_ptr = create_tree();
 
     root = tree_ptr;
@@ -230,7 +241,7 @@ int main() {
     // Assign the first element as the root of the tree
     root->element = 3;
     root->parent = NULL;
-    //printf("Root of tree: %d\n", root->element);
+
 /*
     printf("---Leaf insertion---\n");
     // Insert as a leaf
@@ -246,21 +257,20 @@ int main() {
 */
     printf("\n---Root insertion---\n");
     // Insert at the root
-    BST_insert_at_root(NULL, root, 2);
-    BST_insert_at_root(NULL, root, 1);
-    BST_insert_at_root(NULL, root, 5);
-    BST_insert_at_root(NULL, root, 1);
-    BST_insert_at_root(NULL, root, 3);
-    BST_insert_at_root(NULL, root, 2);
-    BST_insert_at_root(NULL, root, 4);
+    root = BST_insert_at_root(root, 2);
+    root = BST_insert_at_root(root, 1);
+    //BST_insert_at_root(NULL, root, 5);
+    //BST_insert_at_root(NULL, root, 1);
+    //BST_insert_at_root(NULL, root, 3);
+    //BST_insert_at_root(NULL, root, 2);
+    //BST_insert_at_root(NULL, root, 4);
 
-    display_tree(root);
+    //display_tree(root);
 
     //printf("Removing element 5.\n");
     //BST_delete(root, root, 5);
-    //display_tree(root);
+    display_tree(root);
 
     printf("\n");
-
     return 0;
 }
